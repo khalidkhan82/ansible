@@ -1,12 +1,14 @@
 ---
   - hosts: nexus
     gather_facts: false
-    connection: local
+    connection: network_cli
 
     tasks:
       - name: change hostname
         nxos_config:
-          lines: hostname SW_Ansible_1
+          lines: hostname NXOS_Ansible_1
+        tags:
+          - hostname
 
       - name: configure vlan
         nxos_config:
@@ -15,5 +17,12 @@
       - name: rename vlan
         nxos_config:
           lines:
-            - name Sales
+            - name Marketing
           parents: vlan 10
+
+      - name: backup configuration
+        nxos_config:
+          backup: yes
+          backup_options:
+            filename: backup1.cfg
+            dir_path: /home/user/Documents/
