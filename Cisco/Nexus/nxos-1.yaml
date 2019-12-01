@@ -1,0 +1,19 @@
+---
+  - hosts: nexus
+    gather_facts: false
+    connection: local
+
+    tasks:
+      - name: change hostname
+        nxos_config:
+          lines: hostname SW_Ansible_1
+
+      - name: configure vlan
+        nxos_config:
+          lines:
+              - vlan 10
+      - name: rename vlan
+        nxos_config:
+          lines:
+            - name Sales
+          parents: vlan 10

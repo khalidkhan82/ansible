@@ -1,5 +1,8 @@
---
+---
 
-  -name test play
-  -- list 
-  
+  - name: test play
+    hosts: web
+
+    tasks:
+      - name: run echo command
+        command: /bin/echo hello world
