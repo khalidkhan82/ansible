@@ -1,0 +1,40 @@
+---
+  - name: Play 1 - Cisco Nexus
+    hosts: cisco-nexus
+    gather_facts: false
+    connection: network_cli
+
+    tasks:
+      - name: change hostname
+        nxos_config:
+          lines: hostname NXOS_Ansible_1
+
+      - name: Create vlan
+        nxos_config:
+          lines:
+            - vlan 10
+            - name IT
+            - vlan 20
+            - name Sales
+            - vlan 30
+            - name HR
+
+  - name: Play 2 - Cisco IOS
+    hosts: cisco-ios
+    gather_facts: false
+    connection: network_cli
+
+    tasks:
+      - name: change hostname
+        ios_config:
+          lines: hostname NXOS_Ansible_1
+
+      - name: Create vlan
+        ios_config:
+          lines:
+            - vlan 10
+            - name IT
+            - vlan 20
+            - name Sales
+            - vlan 30
+            - name HR

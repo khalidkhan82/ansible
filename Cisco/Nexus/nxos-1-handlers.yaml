@@ -3,6 +3,14 @@
     gather_facts: false
     connection: network_cli
 
+    handlers:
+      - name: backup configuration
+        nxos_config:
+          backup: yes
+          backup_options:
+            filename: backup1.cfg
+            dir_path: /home/user/Documents/
+
     tasks:
       - name: change hostname
         nxos_config:
@@ -14,29 +22,11 @@
         nxos_config:
           lines:
               - vlan 10
-              - int vlan 10
-              - ip 192.168.10.10
+        notify: "backup configuration"
 
       - name: rename vlan
         nxos_config:
           lines:
             - name Marketing
           parents: vlan 10
-
-      - name: backup configuration
-        nxos_config:
-          backup: yes
-          backup_options:
-            filename: backup1.cfg
-            dir_path: /home/user/Documents/
-
-tasks:
-   - name: create file
-     file:
-       path: /tmp/newfile
-       state: touch
-     register: output
-   debug: msg="Register output is {{output}}"
-
-   - name:
-     file:
+        notify: "backup configuration"
