@@ -1,0 +1,52 @@
+- name: "PLAY 1: Configure all LAN Switches"
+  hosts: lan
+  tags: lan
+
+  tasks:
+    - name: "P1T1: Configure Hostname and Domain Name"
+      ios_system:
+        #hostname, domain_name, name_servers, domain_search, lookup_enabled, lookup_source, state
+        #https://docs.ansible.com/ansible/latest/modules/ios_system_module.html
+        hostname: "{{ inventory_hostname }}"
+        domain_name: "{{ domain_name }}"
+        lookup_enabled: no
+        name_servers: "{{ name_servers }}"
+
+    - name: "P1T2: Configure NTP"
+      #server, logging. source_int, state, auth_key (md5), key_id
+      #https://docs.ansible.com/ansible/latest/modules/ios_ntp_module.html
+      ios_ntp:
+        server: "{{ ntp_server }}"
+        logging: true
+        state: present
+
+    - name: "P1T3: Configure Interfaces"
+      ios_interfaces:
+      #config, state
+      #https://docs.ansible.com/ansible/latest/modules/ios_interfaces_module.html
+        config:
+        #name, description, duplex, mtu, enabled, speed
+          name: "{{ item.name }}"
+          description: "{{ item.description }}"
+          duplex: "{{ intf.duplex }}"
+          mtu: "{{ intf_mtu }}"
+        state: up
+      loop: "{{ interfaces[inventory_hostname]}}"
+      register: ios_intf
+
+    - name: "P1T4: Create VLANS"
+      ios_vlan:
+        #config, state
+        #https://docs.ansible.com/ansible/latest/modules/ios_vlans_module.html
+        config:
+          #name, vlan_id, state (operational state), shutdown (shutdown LAN switching), remote_span, mtu
+          vlan_id: "{{ item.vlan_id }}"
+          name: "{{ item.name }}"
+      loop: "{{ vlans }}
+      tags: vlan
+
+
+
+
+
+
