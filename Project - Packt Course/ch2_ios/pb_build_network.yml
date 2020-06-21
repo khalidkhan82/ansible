@@ -1,29 +1,29 @@
-- name: "PLAY 1: Configure all LAN Switches"
+- name: PLAY 1 - Configure all LAN Switches
   hosts: lan
   tags: lan
 
   tasks:
-    - name: "P1T1: Configure Hostname and Domain Name"
+    - name: 'P1T1: Configure Hostname and Domain Name'
       ios_system:
-        ## hostname, domain_name, name_servers, domain_search, lookup_enabled, lookup_source, state
-        ## https://docs.ansible.com/ansible/latest/modules/ios_system_module.html
+        # hostname, domain_name, name_servers, domain_search, lookup_enabled, lookup_source, state
+        # https://docs.ansible.com/ansible/latest/modules/ios_system_module.html
         hostname: "{{ inventory_hostname }}"
         domain_name: "{{ domain_name }}"
         lookup_enabled: no
         name_servers: "{{ name_servers }}"
 
-    - name: "P1T2: Configure NTP"
-      ## server, logging. source_int, state, auth_key (md5), key_id
-      ## https://docs.ansible.com/ansible/latest/modules/ios_ntp_module.html
+    - name: 'P1T2: Configure NTP'
+      # server, logging. source_int, state, auth_key (md5), key_id
+      # https://docs.ansible.com/ansible/latest/modules/ios_ntp_module.html
       ios_ntp:
         server: "{{ ntp_server }}"
         logging: true
         state: present
 
-    - name: "P1T3: Configure Interfaces"
+    - name: 'P1T3: Configure Interfaces'
       ios_interfaces:
-      ## config, state
-      ## https://docs.ansible.com/ansible/latest/modules/ios_interfaces_module.html
+      # config, state
+      # https://docs.ansible.com/ansible/latest/modules/ios_interfaces_module.html
         config:
         #name, description, duplex, mtu, enabled, speed
           name: "{{ item.name }}"
@@ -33,22 +33,25 @@
         state: up
       loop: "{{ interfaces[inventory_hostname]}}"
       register: ios_intf
-
-    - name: "P1T4: Create VLANS"
+  
+  
+    #region P1T4: Create VLANs
+    - name: 'P1T4: Create VLANS'
       ios_vlan:
-        #config, state
-        #https://docs.ansible.com/ansible/latest/modules/ios_vlans_module.html
+        # config, state
+        # https://docs.ansible.com/ansible/latest/modules/ios_vlans_module.html
         config:
           #name, vlan_id, state (operational state), shutdown (shutdown LAN switching), remote_span, mtu
           vlan_id: "{{ item.vlan_id }}"
           name: "{{ item.name }}"
       loop: "{{ vlans }}"
       tags: vlan
+    #endregion
 
-    - name: "P1T5: Configure L2 Trunks"
+    - name: 'P1T5: Configure L2 Trunks'
         ios_l2_interfaces:
-          #config, state
-          #https://docs.ansible.com/ansible/latest/modules/ios_l2_interfaces_module.html
+          # config, state
+          # https://docs.ansible.com/ansible/latest/modules/ios_l2_interfaces_module.html
           config:
             name: "{{ item.name }}"
             ## mode: "{{ item.mode }}"
@@ -58,7 +61,7 @@
           state: present
       loop: "{{ interfaces[inventory_hostname] | selectattr('mode', 'equalto', 'trunk' | list}}"
 
-    - name: "P1T6: Configure Access Ports"
+    - name: 'P1T6: Configure Access Ports'
         ios_l2_interfaces:
           config:
             name: "{{ item.name }}"
@@ -68,6 +71,51 @@
      loop: "{{ interfaces[inventory_hostname] | selectattr('mode', 'equalto', 'access') | list }}"
 
 
+## PLAY 2
+
+- name: PLAY 2 - Configure Core Switches
+  hosts: core
+  tags: l3_core
+  tasks:
+       - name: 'P2T1: Create L3 VLAN interfaces'
+         ios_l3_interfaces:
+           config:
+             name: "{{ item.name }}"
+             ipv4:
+               address: "{{ item.ipv4 | ipv4(hst_svi_id)}}"
+         loop: "{{ svi_interfaces }}"
+
+       - name: 'P2T2: Enable the VLAN interfaces'
+           config:
+             name: "{{ item.name }}"
+           state: up
+         loop: "{{ svi_interfaces }}"
+
+       - name: 'P2T3: Create VRRP Configs'
+         ios_config:
+           parents: interface {{ item.name }}
+             lines:
+               - vrrp {{ item.name.split('Vlan')[1]}} priority {{ hst_vrrp_priority }}
+               - vrrp {{ item.name.split('Vlan')[1]}} ip {{ item.ipv4 | ipv4(254)|ipaddr('address'}}
+         loop: "{{ svi_interfaces | selectattr('vrrp', 'equalto', true | list }}"
+
+       - name: 'P2T4: Configure OSPF on interfaces'
+         ios_config:
+           parents: interfaces {{ item.name }}
+           lines:
+             - ip ospf {{ ospf_process }} area {{ ospf_area }}
+             - ip ospf network point-to-point
+             - ip ospf cost {{item.ospf_metric | default(ospf_metric)}}
+           
+         loop: "{{ (svi_interfaces + core_l3_links[invesntory_hostname]) | selectattr('ospf') | list }"
+
+       - name: 'P2T5: Configure OSPF Passive interfaces'
+         ios_config:
+           parent: router ospf {{ ospf_process }}
+           lines: passive-interface {{ item.name }}
+         loop: "{{ (svi_interfaces + core_l3_interfaces[invesntory_hostname]) | selectattr('ospf', 'equalto', 'passive') | list}}"
+
+         
 
 
 
