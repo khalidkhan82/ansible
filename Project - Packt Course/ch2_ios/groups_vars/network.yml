@@ -1,0 +1,16 @@
+ansible_network_os: ios
+ansible_connection: network_cli
+ansible_user: lab
+ansible_password: lab123
+ansible_become: yes
+ansible_become_password: admin123
+ansible_become_method: enable
+
+#define NTP and DNS servers
+ntp_server: 172.20.1.17    #this will be used by the 'server' parameter in the ios_ntp module
+name_servers:              #these will be used by the 'name_servers' parameter in the ios_system module
+  - 8.8.8.8
+  - 8.8.4.4
+
+intf_duplex: full
+intf_mtu: 1500

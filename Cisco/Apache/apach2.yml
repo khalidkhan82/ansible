@@ -1,0 +1,38 @@
+---
+  - hosts: web
+  - gather_facts: false
+    Roles:
+      name: install-apache
+
+  tasks:
+    - name: enable and start apache using service module
+      service:
+        name: httpd
+        status: started
+
+
+---
+
+ - hosts: nexus
+   gather_facts: false
+   connection: network_cli
+
+   handlers:
+     - name: backup configuration
+       nxos_config:
+         backup: yes
+         backup_options:
+           filename: backup1.cfg
+           dir_path: /home/user/Documents/
+
+    tasks:
+
+     - name: change hostname
+       nxos_config:
+         lines: hostname NXOS_Ansible_1
+
+       tags:
+         - hostname
+
+    notify:
+        - backup configuration

@@ -1,0 +1,11 @@
+---
+  - hosts: nexus
+    gather_facts: false
+    connection: network_cli
+
+    tasks:
+      - name: change hostname
+        nxos_config:
+          lines: hostname Nexus-DC-1
+        when:
+          - ansible_hostname == "nexus1"  

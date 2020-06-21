@@ -1,0 +1,48 @@
+---
+  - hosts: nexus
+    gather_facts: false
+    connection: network_cli
+
+    tasks:
+        - name: configure vlan
+          nxos_config:
+          lines:
+              - vlan "{{item}}"
+        with_items:
+          - vlan 10
+          - vlan 20
+          - vlan 30
+
+      - name: rename vlan
+        nxos_config:
+          lines:
+            - name "{{item}}"
+          parents: vlan "{{item}}"
+        with_items:
+          - vlan 10
+          - vlan 20
+          - vlan 30
+
+  - hosts: ios
+    gather_facts: false
+    connection: network_cli
+
+      tasks:
+          - name: configure vlan
+            ios_config:
+            lines:
+                - vlan "{{item}}"
+          with_items:
+            - vlan 10
+            - vlan 20
+            - vlan 30
+
+        - name: rename vlan
+          ios_config:
+            lines:
+              - name "{{item}}"
+            parents: vlan "{{item}}"
+          with_items:
+            - vlan 10
+            - vlan 20
+            - vlan 30
