@@ -1,0 +1,15 @@
+---
+ - hosts: cisco
+
+   tasks:
+     - name: "show version"
+       ios_command:
+          commands: show version
+       register: show_ver
+
+     - name: "display show version"
+       debug:
+          var: show_ver
+
+  
+   
