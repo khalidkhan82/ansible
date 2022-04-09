@@ -1,0 +1,21 @@
+#this playbook uses cisco.ios.ios_facts module located at:
+#https://docs.ansible.com/ansible/latest/collections/cisco/ios/ios_facts_module.html#ansible-collections-cisco-ios-ios-facts-module
+
+#start Ansible Playbook with 3 dashes. Make sure indentation throughout the Playbook is correct.
+---
+
+- name: Play 1 - Work on Cisco devices                  #we name our first Play
+  hosts: cisco                                          #let Ansible know which host(s) to target for this play
+
+  tasks:
+    - name: Task 1 - Get facts from Cisco devices       #we name our task in this Play
+      cisco.ios.ios_facts:                              #supply the module that we will use in this task
+        gather_subset: 
+        - config                                        #only gather the config part ('show configuration')
+      register: config_output                           #save the output in a variable named 'config_output' using register
+
+    - name: Task 2 - Print config_output
+      ansible.builtin.debug:                            #print the above variable 'config_output' using debug
+          var: config_output
+        
+
